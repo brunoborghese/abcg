@@ -1,3 +1,5 @@
+# Bruno Borghese
+# RA 21028815
 # ABCg
 
 ![linux workflow](https://github.com/hbatagelo/abcg/actions/workflows/linux.yml/badge.svg)
