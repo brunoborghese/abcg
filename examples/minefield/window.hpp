@@ -1,6 +1,7 @@
 #ifndef WINDOW_HPP_
 #define WINDOW_HPP_
 
+#include <algorithm>
 #include <random>
 
 #include "abcgOpenGL.hpp"
@@ -11,8 +12,8 @@ protected:
   void onPaintUI() override;
 
 private:
-  static int const m_N{10};     // Board size is m_N x m_N
-  static int const m_NBombs{1}; // Number of Bombs
+  static int const m_N{10};      // Board size is m_N x m_N
+  static int const m_NBombs{10}; // Number of Bombs
 
   enum class GameState { Play, Win, Lose };
   GameState m_gameState;
@@ -24,7 +25,7 @@ private:
   std::default_random_engine m_randomEngine;
   ImFont *m_font{};
 
-  int clamp(int v, int min, int max);
+  int clampP(int v);
   bool checkForBomb(int i, int j);
   int checkNeighbors(int i, int j);
   void checkEndCondition(bool lost);

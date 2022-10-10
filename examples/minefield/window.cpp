@@ -91,8 +91,26 @@ void Window::onPaintUI() {
               ch = ' ';
             }
 
+            auto buttonColor{3 / 7.0f};
+            if (ch == ' ') {
+              buttonColor = 4 / 7.0f;
+            }
+            if (ch == 'X') {
+              buttonColor = 0.0f;
+            }
+
             // Button text is ch followed by an ID in the format ##ij
             auto buttonText{fmt::format("{}##{}{}", ch, i, j)};
+            ImGui::PushID(i);
+            ImGui::PushStyleColor(
+                ImGuiCol_Button, (ImVec4)ImColor::HSV(buttonColor, 0.6f, 0.6f));
+
+            ImGui::PushStyleColor(
+                ImGuiCol_ButtonHovered,
+                (ImVec4)ImColor::HSV(buttonColor, 0.7f, 0.7f));
+            ImGui::PushStyleColor(
+                ImGuiCol_ButtonActive,
+                (ImVec4)ImColor::HSV(buttonColor, 0.8f, 0.8f));
             if (ImGui::Button(buttonText.c_str(), ImVec2(-1, buttonHeight))) {
               if (m_gameState == GameState::Play && ch == ' ') {
                 bool isBomb = checkForBomb(i, j);
@@ -102,6 +120,8 @@ void Window::onPaintUI() {
                 checkEndCondition(isBomb);
               }
             }
+            ImGui::PopStyleColor(3);
+            ImGui::PopID();
           }
           ImGui::Spacing();
         }
@@ -123,8 +143,10 @@ void Window::onPaintUI() {
   }
 }
 
+int Window::clampP(int v) { return std::clamp(v, 0, m_N - 1); }
+
 bool Window::checkForBomb(int i, int j) {
-  for (auto bomb : iter::range(m_NBombs)) {
+  for (int ix = 0; ix < m_NBombs; ix++) {
     auto const offset{i * m_N + j};
     if (m_bombs.at(offset) == 'b') {
       return true;
@@ -135,31 +157,23 @@ bool Window::checkForBomb(int i, int j) {
 
 int Window::checkNeighbors(int i, int j) {
   int bombsQty = 0;
-  if (checkForBomb(clamp(i - 1, 0, m_N), clamp(j - 1, 0, m_N)))
+  if (checkForBomb(clampP(i - 1), clampP(j - 1)))
     bombsQty++;
-  if (checkForBomb(clamp(i - 1, 0, m_N), clamp(j, 0, m_N)))
+  if (checkForBomb(clampP(i - 1), clampP(j)))
     bombsQty++;
-  if (checkForBomb(clamp(i - 1, 0, m_N), clamp(j + 1, 0, m_N)))
+  if (checkForBomb(clampP(i - 1), clampP(j + 1)))
     bombsQty++;
-  if (checkForBomb(clamp(i, 0, m_N), clamp(j - 1, 0, m_N)))
+  if (checkForBomb(clampP(i), clampP(j - 1)))
     bombsQty++;
-  if (checkForBomb(clamp(i, 0, m_N), clamp(j + 1, 0, m_N)))
+  if (checkForBomb(clampP(i), clampP(j + 1)))
     bombsQty++;
-  if (checkForBomb(clamp(i + 1, 0, m_N), clamp(j - 1, 0, m_N)))
+  if (checkForBomb(clampP(i + 1), clampP(j - 1)))
     bombsQty++;
-  if (checkForBomb(clamp(i + 1, 0, m_N), clamp(j, 0, m_N)))
+  if (checkForBomb(clampP(i + 1), clampP(j)))
     bombsQty++;
-  if (checkForBomb(clamp(i + 1, 0, m_N), clamp(j + 1, 0, m_N)))
+  if (checkForBomb(clampP(i + 1), clampP(j + 1)))
     bombsQty++;
   return bombsQty;
-}
-
-int Window::clamp(int v, int min, int max) {
-  if (v < min)
-    return min;
-  if (v > max)
-    return max;
-  return v;
 }
 
 void Window::checkEndCondition(bool lost) {
@@ -181,12 +195,16 @@ void Window::checkEndCondition(bool lost) {
 void Window::restartGame() {
   m_board.fill('\0');
   m_bombs.fill(' ');
-  std::uniform_int_distribution<int> intDistribution(m_N);
-  for (auto index : iter::range(m_NBombs)) {
+  std::uniform_int_distribution<int> intDistribution(0, m_N - 1);
+  for (int ix = 0; ix < m_NBombs; ix++) {
     int i = intDistribution(m_randomEngine);
     int j = intDistribution(m_randomEngine);
     auto const offset{i * m_N + j};
-    m_bombs.at(offset) = 'b';
+    if (m_bombs.at(offset) == 'b') {
+      ix--;
+    } else {
+      m_bombs.at(offset) = 'b';
+    }
   }
   movesLeft = (m_N * m_N) - m_NBombs;
   m_gameState = GameState::Play;
